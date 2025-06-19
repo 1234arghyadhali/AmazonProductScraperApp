@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon.in Product Scraper</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <div class="d-inline-flex align-items-center mb-3">
+                        <i data-feather="shopping-cart" class="me-2"></i>
+                        <h1 class="mb-0">Amazon.in Product Scraper</h1>
+                    </div>
+                    <p class="text-muted">Extract product names and prices from Amazon.in pages and download as CSV</p>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show" role="alert">
+                                <i data-feather="{{ 'alert-circle' if category == 'error' else 'alert-triangle' if category == 'warning' else 'check-circle' }}" class="me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Main Form -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <form method="POST" action="{{ url_for('scrape') }}" id="scrapeForm">
+                            <div class="mb-4">
+                                <label for="url" class="form-label">Amazon.in Product Page URL</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i data-feather="link"></i>
+                                    </span>
+                                    <input 
+                                        type="url" 
+                                        class="form-control" 
+                                        id="url" 
+                                        name="url" 
+                                        placeholder="https://www.amazon.in/s?k=laptops" 
+                                        required
+                                    >
+                                </div>
+                                <div class="form-text">
+                                    Enter any Amazon.in product listing page URL (search results, category pages, etc.)
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="scrapeBtn">
+                                    <i data-feather="download" class="me-2"></i>
+                                    <span class="btn-text">Scrape & Download CSV</span>
+                                    <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="info" class="me-2"></i>
+                            How to Use
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li class="mb-2">Go to Amazon.in and find a product listing page (search results, category page, etc.)</li>
+                            <li class="mb-2">Copy the URL from your browser's address bar</li>
+                            <li class="mb-2">Paste the URL in the input field above</li>
+                            <li class="mb-2">Click "Scrape & Download CSV" to automatically extract and download the data</li>
+                            <li>The CSV file will contain product names and prices</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i data-feather="shield" class="mb-3"></i>
+                                <h6>Anti-Bot Protection</h6>
+                                <p class="text-muted small mb-0">Rotating user agents and request delays to avoid blocking</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i data-feather="zap" class="mb-3"></i>
+                                <h6>Automatic Processing</h6>
+                                <p class="text-muted small mb-0">Just paste URL and get CSV - no additional configuration needed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i data-feather="download-cloud" class="mb-3"></i>
+                                <h6>Direct Download</h6>
+                                <p class="text-muted small mb-0">CSV file downloads automatically after successful scraping</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.0/dist/feather.min.js"></script>
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+
+        // Form submission handling
+        document.getElementById('scrapeForm').addEventListener('submit', function() {
+            const btn = document.getElementById('scrapeBtn');
+            const btnText = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.spinner-border');
+            
+            // Show loading state
+            btn.disabled = true;
+            btnText.textContent = 'Scraping...';
+            spinner.classList.remove('d-none');
+        });
+
+        // URL validation
+        document.getElementById('url').addEventListener('input', function() {
+            const input = this;
+            const url = input.value.toLowerCase();
+            
+            if (url && !url.includes('amazon.in')) {
+                input.setCustomValidity('Please enter a valid Amazon.in URL');
+            } else {
+                input.setCustomValidity('');
+            }
+        });
+    </script>
+</body>
+</html>
