@@ -12,3 +12,5 @@ Open a terminal (Command Prompt or PowerShell on Windows, Terminal on macOS/Linu
 
 ```bash
 python --version
+
+### Then type python app.py
