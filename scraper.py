@@ -204,7 +204,9 @@ class AmazonScraper:
                     # Remove extra spaces and normalize
                     price_text = ' '.join(price_text.split())
                     if any(char.isdigit() for char in price_text):
-                        product['price'] = price_text if '₹' in price_text or 'Rs' in price_text.upper() else f"₹{price_text}"
+                        # Replace problematic currency symbols with Rs
+                        clean_price = price_text.replace('₹', 'Rs ').replace('â', 'Rs ')
+                        product['price'] = clean_price if 'Rs' in clean_price else f"Rs {price_text}"
                         break
         
         # Fallback: look for any numeric content that might be price
@@ -221,7 +223,10 @@ class AmazonScraper:
             for pattern in price_patterns:
                 match = re.search(pattern, all_text)
                 if match:
-                    product['price'] = match.group().strip()
+                    price_text = match.group().strip()
+                    # Replace problematic currency symbols with Rs
+                    clean_price = price_text.replace('₹', 'Rs ').replace('â', 'Rs ')
+                    product['price'] = clean_price
                     break
         
         return product
